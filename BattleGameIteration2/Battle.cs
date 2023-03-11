@@ -1,0 +1,113 @@
+﻿using BattleGameIteration2.Units;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BattleGameIteration2
+{
+    internal class Battle
+    {
+        Random rnd = new (10);
+
+        Army Army1;
+        Army Army2;
+
+        int round = 1;
+        public int unitPointer = 0;
+        public bool winCondition = false;
+
+
+        public Battle(Army Army1, Army Army2)
+        {
+            this.Army1 = Army1;
+            this.Army2 = Army2;
+        }
+
+        public string MakeTurn()
+        {
+            StringBuilder sb = new();
+
+            if (Army1.units.Count == 0)
+            {
+                winCondition = true;
+                return $"Битва завершена. Победила {Army2.name}!\n";
+            }
+            else if (Army2.units.Count == 0)
+            {
+                winCondition = true;
+                return $"Битва завершена. Победила {Army1.name}!\n";
+            }
+            // Если unitpointer указывает за предел одной из армий -- завершаем текущий раунд
+            if (unitPointer > Army1.units.Count - 1 || unitPointer > Army2.units.Count - 1)
+            {
+                round++;
+                Army1.CleanUpDead();
+                Army2.CleanUpDead();
+                unitPointer = 0;
+                return "Раунд завершен. Убираем мертвых\n";
+            }
+            // Если это перый в очереди юнит
+            if (unitPointer == 0)
+            {
+                CalulateFrontLiners(Army1, Army2);
+                CalulateFrontLiners(Army2, Army1);
+
+                unitPointer++;
+                return sb.ToString();
+            }
+
+            // Просчитываем специальные атаки остальных юнитов
+            CalculateSpecials(Army1, Army2);
+            CalculateSpecials(Army2, Army1);
+
+            unitPointer++;
+            return sb.ToString();
+
+            void CalulateFrontLiners(Army currentArmy, Army opposingArmy)
+            {
+                Unit currentUnit = currentArmy.units[0];
+
+                if (currentArmy.units[0].hitPoints > 0)
+                {
+                    opposingArmy.units[0].TakeDamage(Army1.units[0]);
+                    sb.Append($"{currentUnit.unitName} армии {currentArmy.name} ударяет оппонента\n");
+                }
+                else
+                {
+                    sb.Append($"{currentUnit.unitName} армии {currentArmy.name} мертв и не может биться\n");
+                }
+            }
+            void CalculateSpecials(Army currentArmy, Army opposingArmy)
+            {
+                Unit currentUnit = currentArmy.units[unitPointer];
+
+                if (currentUnit.hitPoints > 0 && currentUnit is ISpecialAbility)
+                {
+                    if (currentUnit is Archer)
+                    {
+                        int hitPosition = -unitPointer - 1;
+                        hitPosition += rnd.Next(1, ((ISpecialAbility)currentUnit).specialRange);
+
+                        if (hitPosition >= 0 && hitPosition <= opposingArmy.units.Count - 1)
+                        {
+                            opposingArmy.units[hitPosition].TakeSpecialDamage((ISpecialAbility)currentUnit);
+
+                            sb.Append($"Юнит армии {currentArmy.name} попадает по юниту {opposingArmy.name} на позиции {hitPosition}\n");
+                        }
+                        else
+                        {
+                            sb.Append($"Юнит армии {currentArmy.name} промахиватеся и попадает в {hitPosition}\n");
+                        }
+                    }
+                }
+                else
+                {
+                    sb.Append($"{currentUnit.unitName} армии {currentArmy.name} не имеет спциальной атаки и пропускает ход\n");
+                }
+            }
+        }
+    }
+}
