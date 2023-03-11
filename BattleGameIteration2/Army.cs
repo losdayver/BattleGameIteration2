@@ -10,7 +10,7 @@ namespace BattleGameIteration2
 {
     internal class Army
     {
-        public int cost;
+        public float cost = 0;
         public string name;
         public List<Unit> units = new();
         public Army(List<Unit> units, string name)

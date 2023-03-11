@@ -9,18 +9,26 @@ namespace BattleGameIteration2.Units
     abstract internal class Unit
     {
         public string unitName;
-        public int attack;
-        public int defense;
-        public int hitPoints;
+        public float attack;
+        public float defense;
+        public float hitPoints;
+        //float maxHitPoints;
 
         public void TakeDamage(Unit opponent)
         {
             hitPoints -= opponent.attack;
         }
 
-        public void TakeSpecialDamage(ISpecialAbility opponent)
+        public void SpecialAction(ISpecialAbility opponent)
         {
-            hitPoints -= opponent.specialStrength;
+            if (opponent is Archer)
+            {
+                hitPoints -= opponent.specialStrength;
+            }
+            else if (opponent is Healer)
+            {
+                hitPoints += opponent.specialStrength;
+            }
         }
 
         public string GetInfo()

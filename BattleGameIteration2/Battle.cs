@@ -10,7 +10,7 @@ namespace BattleGameIteration2
 {
     internal class Battle
     {
-        Random rnd = new (10);
+        Random rnd = new (20);
 
         Army Army1;
         Army Army2;
@@ -47,7 +47,8 @@ namespace BattleGameIteration2
                 Army1.CleanUpDead();
                 Army2.CleanUpDead();
                 unitPointer = 0;
-                return "Раунд завершен. Убираем мертвых\n";
+                (Army1, Army2) = (Army2, Army1);
+                return "Раунд завершен. Убираем мертвых. Армии поменялись местами в очередности\n";
             }
             // Если это перый в очереди юнит
             if (unitPointer == 0)
@@ -73,19 +74,21 @@ namespace BattleGameIteration2
                 if (currentArmy.units[0].hitPoints > 0)
                 {
                     opposingArmy.units[0].TakeDamage(Army1.units[0]);
-                    sb.Append($"{currentUnit.unitName} армии {currentArmy.name} ударяет оппонента\n");
+                    sb.Append($"'{currentUnit.unitName}' армии '{currentArmy.name}' ударяет '{opposingArmy.units[0].unitName}'\n");
                 }
                 else
                 {
-                    sb.Append($"{currentUnit.unitName} армии {currentArmy.name} мертв и не может биться\n");
+                    sb.Append($"'{currentUnit.unitName}' армии '{currentArmy.name}' мертв и не может биться\n");
                 }
             }
             void CalculateSpecials(Army currentArmy, Army opposingArmy)
             {
                 Unit currentUnit = currentArmy.units[unitPointer];
 
+                // Проверка что юнит жив и обладает специальной атакой
                 if (currentUnit.hitPoints > 0 && currentUnit is ISpecialAbility)
                 {
+                    // Логика для лучника
                     if (currentUnit is Archer)
                     {
                         int hitPosition = -unitPointer - 1;
@@ -93,19 +96,45 @@ namespace BattleGameIteration2
 
                         if (hitPosition >= 0 && hitPosition <= opposingArmy.units.Count - 1)
                         {
-                            opposingArmy.units[hitPosition].TakeSpecialDamage((ISpecialAbility)currentUnit);
+                            opposingArmy.units[hitPosition].SpecialAction((ISpecialAbility)currentUnit);
 
-                            sb.Append($"Юнит армии {currentArmy.name} попадает по юниту {opposingArmy.name} на позиции {hitPosition}\n");
+                            sb.Append($"'{currentUnit.unitName}' армии '{currentArmy.name}' попадает по '{opposingArmy.units[hitPosition].unitName}' армии '{opposingArmy.name}' на позиции {hitPosition}\n");
                         }
                         else
                         {
-                            sb.Append($"Юнит армии {currentArmy.name} промахиватеся и попадает в {hitPosition}\n");
+                            sb.Append($"'{currentUnit.unitName}' армии '{currentArmy.name}' промахиватеся\n");
+                        }
+                    }
+                    else if (currentUnit is Healer)
+                    {
+                        int leftBoundry = (int)Math.Ceiling((decimal)((ISpecialAbility)currentUnit).specialRange / 2);
+                        int rightBoundry = (int)Math.Floor((decimal)((ISpecialAbility)currentUnit).specialRange / 2);
+
+                        int healPosition = rnd.Next(unitPointer - leftBoundry, unitPointer + rightBoundry);
+
+                        if (healPosition >= 0 && healPosition < currentArmy.units.Count())
+                        {
+                            currentArmy.units[healPosition].SpecialAction((ISpecialAbility)currentUnit);
+                            sb.Append($"'{currentUnit.unitName}' армии '{currentArmy.name}' лечит '{currentArmy.units[healPosition].unitName}' на позиции {healPosition}\n");
+                        }
+                        else
+                        {
+                            sb.Append($"'{currentUnit.unitName}' армии '{currentArmy.name}' промахиватеся и никого не лечит\n");
                         }
                     }
                 }
+                // Если жив, но не обладает специальной атакой
+                else if (currentUnit.hitPoints > 0 && currentUnit is not ISpecialAbility)
+                {
+                    sb.Append($"'{currentUnit.unitName}' армии '{currentArmy.name}' не имеет спциальной атаки и пропускает ход\n");
+                }
+                // Если мертв
                 else
                 {
-                    sb.Append($"{currentUnit.unitName} армии {currentArmy.name} не имеет спциальной атаки и пропускает ход\n");
+                    if (currentUnit is Healer)
+                        sb.Append($"'{currentUnit.unitName}' армии '{currentArmy.name}' мертв и не может лечить\n");
+                    else
+                        sb.Append($"'{currentUnit.unitName}' армии '{currentArmy.name}' мертв и не может биться\n");
                 }
             }
         }

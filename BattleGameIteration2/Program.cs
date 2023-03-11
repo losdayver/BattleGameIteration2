@@ -6,37 +6,40 @@ class Program
     static void Main()
     {
         Army army1 = new( new() {
+            new Archer(),
+            new Archer(),
+            new Healer(),
             new HeavyInfantry(),
-            new LightInfantry(),
-        }, "Армия 1");
+            new Knight(),
+        }, "Синие");
 
         Army army2 = new(new() {
+            new HeavyInfantry(),
             new Archer(),
-            new Archer(),
-            new Archer(),
-            new Archer(),
-            new Archer(),
-            new Archer(),
-        }, "Армия 2");
+            new HeavyInfantry(),
+            new Healer(),
+            new LightInfantry(),
+        }, "Красные");
 
         Battle battle = new(army1, army2);
 
-        Console.WriteLine("Начальная информация о юнитах: ");
+        Console.WriteLine("Начальная информация о юнитах: \n");
         Console.WriteLine(army1.GetInfo());
         Console.WriteLine(army2.GetInfo());
         Console.ReadKey();
-        Console.WriteLine("_____________________________________________");
 
         while (!battle.winCondition)
         {
-            Console.WriteLine($"Сейчас ходят юниты под номером: {battle.unitPointer}");
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine($"Сейчас ходят юниты под номером: {battle.unitPointer}\n");
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(battle.MakeTurn());
+            Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(army1.GetInfo());
             Console.WriteLine(army2.GetInfo());
             Console.ReadKey();
-            Console.WriteLine("_____________________________________________");
         }
-
-        Console.ReadKey();
     }
 }
